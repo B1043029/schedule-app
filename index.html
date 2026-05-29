@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #F5F3EE; --surface: #FFFFFF; --surface2: #F0EDE6;
+    --border: #DDD8CE; --text: #1A1714; --text2: #6B6560;
+    --accent: #2D5A3D; --accent-light: #E8F0EB; --accent2: #C4472A;
+    --accent2-light: #FAEAE7; --warn: #D97706; --warn-light: #FEF3C7;
+    --mono: 'DM Mono', monospace; --sans: 'Noto Sans TC', sans-serif;
+  }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 13px; }
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  .sidebar { width: 210px; background: var(--text); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-logo { padding: 16px 18px 12px; font-size: 15px; font-weight: 700; letter-spacing: 0.04em; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-logo span { color: #6EE7A0; }
+
+  /* Store switcher */
+  .store-switcher { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .store-current { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 7px; background: rgba(255,255,255,0.08); cursor: pointer; transition: background 0.15s; }
+  .store-current:hover { background: rgba(255,255,255,0.13); }
+  .store-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .store-name { font-size: 12px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .store-chevron { font-size: 10px; color: rgba(255,255,255,0.4); }
+  .store-dropdown { display: none; margin-top: 6px; background: rgba(255,255,255,0.05); border-radius: 7px; overflow: hidden; }
+  .store-dropdown.open { display: block; }
+  .store-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; font-size: 12px; color: rgba(255,255,255,0.7); transition: background 0.12s; }
+  .store-option:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .store-option.active { color: #fff; background: rgba(110,231,160,0.12); }
+  .store-add-btn { display: flex; align-items: center; gap: 6px; padding: 8px 10px; cursor: pointer; font-size: 11px; color: rgba(255,255,255,0.4); border-top: 1px solid rgba(255,255,255,0.08); transition: color 0.12s; }
+  .store-add-btn:hover { color: #6EE7A0; }
+  .manage-stores-btn { display: flex; align-items: center; gap: 6px; padding: 7px 10px; cursor: pointer; font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; border-radius: 5px; transition: all 0.12s; }
+  .manage-stores-btn:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.05); }
+
+  .sidebar-nav { padding: 10px 0; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 18px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.55); transition: all 0.15s; border-left: 2px solid transparent; }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .nav-item.active { color: #fff; border-left-color: #6EE7A0; background: rgba(110,231,160,0.08); }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+  /* ── Main ── */
+  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .topbar-title { font-size: 15px; font-weight: 600; }
+  .topbar-store-badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; margin-left: 8px; vertical-align: middle; }
+  .topbar-actions { display: flex; gap: 8px; }
+
+  /* ── Buttons ── */
+  .btn { padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-family: var(--sans); font-weight: 500; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #234a31; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+  .btn-danger-ghost { background: transparent; color: var(--accent2); border: 1px solid var(--accent2); }
+  .btn-danger-ghost:hover { background: var(--accent2-light); }
+
+  .content { padding: 20px 24px; flex: 1; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .card-title { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); margin-bottom: 12px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── Store management screen ── */
+  .store-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .store-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .store-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .store-color-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .store-card-name { font-weight: 700; font-size: 15px; }
+  .store-card-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+  .store-stat { background: var(--surface2); border-radius: 6px; padding: 7px 10px; }
+  .store-stat-label { font-size: 10px; color: var(--text2); }
+  .store-stat-value { font-size: 14px; font-weight: 700; font-family: var(--mono); }
+  .store-card-footer { display: flex; gap: 6px; border-top: 1px solid var(--border); padding-top: 10px; }
+
+  /* ── Employee grid ── */
+  .employee-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .emp-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; transition: box-shadow 0.15s; }
+  .emp-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+  .emp-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+  .emp-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .emp-rate { font-family: var(--mono); font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .tag { padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 500; }
+  .tag-morning { background: #FEF9C3; color: #92400E; }
+  .tag-afternoon { background: #DBEAFE; color: #1E40AF; }
+  .tag-evening { background: #EDE9FE; color: #5B21B6; }
+  .tag-minsalary { background: var(--accent-light); color: var(--accent); }
+  .emp-card-footer { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+
+  /* ── Shift table ── */
+  .shift-table { width: 100%; border-collapse: collapse; }
+  .shift-table th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 0.05em; text-transform: uppercase; padding: 0 10px 8px; border-bottom: 1px solid var(--border); }
+  .shift-table td { padding: 8px 10px; border-bottom: 1px solid var(--surface2); vertical-align: middle; }
+  .shift-table tr:last-child td { border-bottom: none; }
+  .shift-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0; }
+  .dot-morning { background: #F59E0B; } .dot-afternoon { background: #3B82F6; }
+  .dot-evening { background: #8B5CF6; } .dot-holiday { background: var(--accent2); }
+  .shift-time { font-family: var(--mono); font-size: 12px; }
+  .multiplier-badge { padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-size: 11px; font-weight: 500; }
+  .mult-normal { background: var(--accent-light); color: var(--accent); }
+  .mult-double { background: var(--accent2-light); color: var(--accent2); }
+  .toggle { width: 32px; height: 18px; border-radius: 9px; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle.on { background: var(--accent); } .toggle.off { background: var(--border); }
+  .toggle::after { content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #fff; top: 2px; transition: left 0.2s; }
+  .toggle.on::after { left: 16px; } .toggle.off::after { left: 2px; }
+  .inline-input { border: 1px solid var(--border); border-radius: 4px; padding: 3px 7px; font-size: 12px; font-family: var(--mono); background: var(--surface2); width: 80px; }
+  .inline-input:focus { outline: none; border-color: var(--accent); background: #fff; }
+  .inline-input-sm { width: 50px; }
+  .inline-input-name { width: 110px; font-family: var(--sans); }
+
+  /* ── Config ── */
+  .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .config-section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+  .config-label { font-size: 12px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+  .weekday-row { display: flex; gap: 6px; }
+  .weekday-btn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .weekday-btn.closed { background: var(--accent2-light); border-color: var(--accent2); color: var(--accent2); text-decoration: line-through; }
+  .weekday-btn.open { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .input-label { font-size: 12px; color: var(--text2); width: 100px; flex-shrink: 0; }
+  .input-box { border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 12px; font-family: var(--sans); background: var(--surface2); width: 80px; }
+  .input-unit { font-size: 11px; color: var(--text2); }
+  .holiday-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .holiday-pill { padding: 3px 10px; background: var(--accent2-light); color: var(--accent2); border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .shift-checklist { display: flex; flex-direction: column; gap: 6px; }
+  .shift-check-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .checkbox { width: 15px; height: 15px; border-radius: 3px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .checkbox.checked { background: var(--accent); border-color: var(--accent); color: #fff; font-size: 9px; }
+
+  /* ── Schedule table ── */
+  .schedule-wrap { overflow-x: auto; overflow-y: visible; }
+  .schedule-table { border-collapse: collapse; min-width: 100%; }
+  .schedule-table th, .schedule-table td { border: 1px solid var(--border); padding: 5px 7px; white-space: nowrap; font-size: 11px; }
+  .schedule-table th { background: var(--surface2); font-weight: 600; text-align: center; }
+  .date-num { font-weight: 700; font-size: 12px; }
+  .date-red { color: var(--accent2); }
+  .emp-name-chip { border-radius: 4px; padding: 3px 6px; font-size: 11px; font-weight: 500; display: inline-block; cursor: pointer; white-space: nowrap; transition: opacity 0.12s; }
+  .emp-name-chip:hover { opacity: 0.75; }
+  .cell-morning { background: #FEF3C7; color: #92400E; }
+  .cell-afternoon { background: #DBEAFE; color: #1E40AF; }
+  .cell-evening { background: #EDE9FE; color: #5B21B6; }
+  .cell-holiday { background: var(--accent2-light); color: var(--accent2); }
+  .cell-locked { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .add-emp-btn { font-size:10px; color:var(--accent); cursor:pointer; margin-top:3px; padding:2px 6px; border-radius:4px; border:1px dashed var(--accent); display:inline-block; transition:background 0.12s; }
+  .add-emp-btn:hover { background:var(--accent-light); }
+  .remove-btn { font-size:9px; color:var(--text2); cursor:pointer; padding:1px 3px; border-radius:3px; transition:all 0.12s; flex-shrink:0; }
+  .remove-btn:hover { background:var(--accent2-light); color:var(--accent2); }
+
+  /* ── Summary ── */
+  .summary-table { width: 100%; border-collapse: collapse; }
+  .summary-table th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 0.05em; text-transform: uppercase; padding: 0 12px 8px; border-bottom: 1px solid var(--border); }
+  .summary-table td { padding: 10px 12px; border-bottom: 1px solid var(--surface2); }
+  .summary-table tr:last-child td { border-bottom: none; }
+  .salary-num { font-family: var(--mono); font-weight: 500; }
+  .status-badge { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .status-ok { background: var(--accent-light); color: var(--accent); }
+  .status-warn { background: var(--warn-light); color: var(--warn); }
+  .warn-banner { background: var(--warn-light); border: 1px solid #FCD34D; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: #92400E; display: flex; align-items: flex-start; gap: 8px; }
+
+  /* ── Modals ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 12px; padding: 22px; width: 380px; box-shadow: 0 10px 40px rgba(0,0,0,0.18); max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+  .form-row { margin-bottom: 12px; }
+  .form-label { font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 4px; display: block; letter-spacing: 0.04em; text-transform: uppercase; }
+  .form-input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 13px; font-family: var(--sans); background: var(--surface2); }
+  .form-input:focus { outline: none; border-color: var(--accent); background: #fff; }
+  .pref-row { display: flex; gap: 6px; }
+  .pref-btn { flex: 1; padding: 7px; text-align: center; border-radius: 6px; border: 1.5px solid var(--border); font-size: 11px; cursor: pointer; transition: all 0.15s; font-family: var(--sans); background: white; }
+  .pref-btn.sel-m { border-color: #F59E0B; background: #FEF3C7; color: #92400E; }
+  .pref-btn.sel-a { border-color: #3B82F6; background: #DBEAFE; color: #1E40AF; }
+  .pref-btn.sel-e { border-color: #8B5CF6; background: #EDE9FE; color: #5B21B6; }
+  .switch-row { display: flex; align-items: center; justify-content: space-between; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+  /* Color picker */
+  .color-picker-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: border-color 0.12s; }
+  .color-swatch.selected { border-color: var(--text); }
+
+  /* Calendar */
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-weight: 600; font-size: 13px; }
+  .cal-nav { cursor: pointer; padding: 2px 8px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); font-size: 12px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-day-label { text-align: center; font-size: 10px; font-weight: 600; color: var(--text2); padding: 2px 0; }
+  .cal-day { text-align: center; padding: 5px 2px; border-radius: 5px; font-size: 12px; cursor: pointer; transition: all 0.12s; }
+  .cal-day:hover { background: var(--surface2); }
+  .cal-day.blocked { background: var(--accent2-light); color: var(--accent2); font-weight: 600; }
+  .cal-day.empty { cursor: default; }
+
+  /* Assign modal */
+  .assign-emp-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+  .assign-emp-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--border); cursor: pointer; transition: all 0.12s; }
+  .assign-emp-row:hover { background: var(--accent-light); border-color: var(--accent); }
+  .assign-emp-row.already { background: var(--surface2); color: var(--text2); cursor: default; }
+  .assign-emp-row.unavail { background: #FFF3F3; color: var(--accent2); cursor: default; }
+
+  .spinning { animation: spin 1s linear infinite; display: inline-block; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Sidebar ── -->
+  <div class="sidebar">
+    <div class="sidebar-logo">排<span>班</span>助手</div>
+
+    <!-- Store Switcher -->
+    <div class="store-switcher">
+      <div class="store-current" onclick="toggleStoreDropdown()">
+        <div class="store-dot" id="currentStoreDot"></div>
+        <div class="store-name" id="currentStoreName">載入中...</div>
+        <div class="store-chevron">▼</div>
+      </div>
+      <div class="store-dropdown" id="storeDropdown">
+        <div id="storeOptionList"></div>
+        <div class="store-add-btn" onclick="openAddStoreModal()">＋ 新增分店</div>
+      </div>
+      <div class="manage-stores-btn" onclick="showScreen('stores')">🏪 管理分店</div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-item" onclick="showScreen('employees')" id="nav-employees"><span class="nav-icon">👥</span> 員工管理</div>
+      <div class="nav-item" onclick="showScreen('shifts')" id="nav-shifts"><span class="nav-icon">🕐</span> 班別設定</div>
+      <div class="nav-item" onclick="showScreen('config')" id="nav-config"><span class="nav-icon">⚙️</span> 排班設定</div>
+      <div class="nav-item" onclick="showScreen('schedule')" id="nav-schedule"><span class="nav-icon">📅</span> 班表總覽</div>
+      <div class="nav-item" onclick="showScreen('summary')" id="nav-summary"><span class="nav-icon">📊</span> 工時統計</div>
+    </div>
+  </div>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <!-- Screen 0: Stores -->
+    <div class="screen" id="screen-stores">
+      <div class="topbar">
+        <div class="topbar-title">分店管理</div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openAddStoreModal()">＋ 新增分店</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="store-grid" id="storeGrid"></div>
+      </div>
+    </div>
+
+    <!-- Screen 1: Employees -->
+    <div class="screen" id="screen-employees">
+      <div class="topbar">
+        <div class="topbar-title">員工管理 <span class="topbar-store-badge" id="empStoreBadge"></span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openAddEmpModal()">＋ 新增員工</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="employee-grid" id="empGrid"></div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Shifts -->
+    <div class="screen" id="screen-shifts">
+      <div class="topbar">
+        <div class="topbar-title">班別設定 <span class="topbar-store-badge" id="shiftStoreBadge"></span></div>
+        <div class="topbar-actions"><button class="btn btn-primary" onclick="addCustomShift()">＋ 新增自訂班別</button></div>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="card-title">預設班別 <span style="font-weight:400;font-size:11px;color:var(--text2);text-transform:none;">— 點擊欄位可直接編輯</span></div>
+          <table class="shift-table"><thead><tr><th>班別名稱</th><th>開始</th><th>結束</th><th>時數</th><th>所需人力</th><th>薪資倍率</th><th>啟用</th></tr></thead>
+          <tbody id="shiftTableBody"></tbody></table>
+        </div>
+        <div class="card">
+          <div class="card-title">自訂班別</div>
+          <table class="shift-table"><thead><tr><th>班別名稱</th><th>開始</th><th>結束</th><th>時數</th><th>所需人力</th><th>薪資倍率</th><th>啟用</th><th></th></tr></thead>
+          <tbody id="customShiftBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Config -->
+    <div class="screen" id="screen-config">
+      <div class="topbar">
+        <div class="topbar-title" id="configTopbarTitle">排班設定 <span class="topbar-store-badge" id="configStoreBadge"></span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost">新建排班週期</button>
+          <button class="btn btn-primary" onclick="runAutoSchedule()">執行自動排班 →</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="config-grid">
+          <div>
+            <div class="config-section">
+              <div class="config-label">排班週期</div>
+              <div class="input-row"><div class="input-label">名稱</div><input class="form-input" id="configPeriodName" value="2026年7月排班" style="flex:1;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;background:var(--surface2);"></div>
+              <div class="input-row"><div class="input-label">開始日期</div><input class="input-box" id="configStartDate" value="2026/07/01"></div>
+              <div class="input-row"><div class="input-label">結束日期</div><input class="input-box" id="configEndDate" value="2026/07/31"></div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">關閉星期（公休日）</div>
+              <div class="weekday-row">
+                <div class="weekday-btn open" onclick="toggleWeekday(this)">一</div>
+                <div class="weekday-btn closed" onclick="toggleWeekday(this)">二</div>
+                <div class="weekday-btn open" onclick="toggleWeekday(this)">三</div>
+                <div class="weekday-btn open" onclick="toggleWeekday(this)">四</div>
+                <div class="weekday-btn open" onclick="toggleWeekday(this)">五</div>
+                <div class="weekday-btn open" onclick="toggleWeekday(this)">六</div>
+                <div class="weekday-btn open" onclick="toggleWeekday(this)">日</div>
+              </div>
+              <div style="font-size:10px;color:var(--text2);margin-top:8px;">紅色＝公休，綠色＝開放排班</div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">排班規則</div>
+              <div class="input-row"><div class="input-label">班別最短間距</div><input class="input-box" value="8"><span class="input-unit">小時</span></div>
+              <div class="input-row"><div class="input-label">連續上班上限</div><input class="input-box" value="6"><span class="input-unit">天</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="config-section">
+              <div class="config-label">本期啟用班別</div>
+              <div class="shift-checklist" id="configShiftList"></div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">國定假日（紅字日）</div>
+              <div class="holiday-list">
+                <span class="holiday-pill">7/1</span><span class="holiday-pill">7/28 補假</span>
+                <button class="btn btn-ghost btn-sm">＋ 手動新增</button>
+              </div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">員工本期不可排班日</div>
+              <div id="unavailList" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Schedule -->
+    <div class="screen" id="screen-schedule">
+      <div class="topbar">
+        <div class="topbar-title">班表總覽 — <span id="scheduleperiodLabel"></span> <span class="topbar-store-badge" id="scheduleStoreBadge"></span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" onclick="showScreen('config')">← 返回設定</button>
+          <button class="btn btn-ghost" id="rerunBtn" onclick="runAutoSchedule()">🔄 重新自動排班</button>
+          <button class="btn btn-primary" onclick="showScreen('summary')">確認發布 →</button>
+        </div>
+      </div>
+      <div class="content">
+        <div id="scheduleWarning"></div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:11px;color:var(--text2);">圖例：</span>
+          <span class="emp-name-chip cell-morning" style="display:inline-block;">早班</span>
+          <span class="emp-name-chip cell-afternoon" style="display:inline-block;">午班</span>
+          <span class="emp-name-chip cell-evening" style="display:inline-block;">晚班</span>
+          <span class="emp-name-chip cell-holiday" style="display:inline-block;">假日</span>
+          <span class="emp-name-chip cell-morning cell-locked" style="display:inline-block;">已鎖🔒</span>
+          <span style="font-size:11px;color:var(--text2);">點擊姓名鎖定 · ✕ 移除 · 空格點擊加人</span>
+        </div>
+        <div class="schedule-wrap"><table class="schedule-table" id="scheduleTable"></table></div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Summary -->
+    <div class="screen" id="screen-summary">
+      <div class="topbar">
+        <div class="topbar-title">工時統計 — <span id="summaryPeriodLabel"></span> <span class="topbar-store-badge" id="summaryStoreBadge"></span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost">匯出 Excel</button>
+          <button class="btn btn-primary">確認發布</button>
+        </div>
+      </div>
+      <div class="content">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px;" id="summaryCards"></div>
+        <div id="summaryWarn"></div>
+        <div class="card">
+          <div class="card-title">員工薪資明細</div>
+          <table class="summary-table"><thead><tr><th>員工</th><th>班數</th><th>一般工時</th><th>假日工時</th><th>總工時</th><th>預估薪資</th><th>最低薪資門檻</th><th>狀態</th></tr></thead>
+          <tbody id="summaryBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main -->
+</div><!-- end app -->
+
+<!-- ── Store Modal ── -->
+<div class="modal-overlay" id="storeModal">
+  <div class="modal">
+    <div class="modal-title" id="storeModalTitle">新增分店</div>
+    <div class="form-row"><label class="form-label">店名</label><input class="form-input" id="storeName" placeholder="例如：信義店"></div>
+    <div class="form-row"><label class="form-label">地址（選填）</label><input class="form-input" id="storeAddress" placeholder="例如：台北市信義區..."></div>
+    <div class="form-row">
+      <label class="form-label">代表色</label>
+      <div class="color-picker-row" id="colorPicker"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('storeModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveStore()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Employee Modal ── -->
+<div class="modal-overlay" id="empModal">
+  <div class="modal">
+    <div class="modal-title" id="empModalTitle">新增員工</div>
+    <div class="form-row"><label class="form-label">姓名</label><input class="form-input" id="empName" placeholder="輸入員工姓名"></div>
+    <div class="form-row"><label class="form-label">時薪（NT$）</label><input class="form-input" id="empRate" placeholder="例如 175" type="number"></div>
+    <div class="form-row">
+      <label class="form-label">偏好時段（可複選）</label>
+      <div class="pref-row">
+        <button class="pref-btn" id="pref-m" onclick="togglePref('m')">🌅 早班</button>
+        <button class="pref-btn" id="pref-a" onclick="togglePref('a')">☀️ 午班</button>
+        <button class="pref-btn" id="pref-e" onclick="togglePref('e')">🌙 晚班</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="switch-row">
+        <label class="form-label" style="margin-bottom:0;">啟用最低薪資需求</label>
+        <div class="toggle off" id="minSalaryToggle" onclick="toggleMinSalary()"></div>
+      </div>
+    </div>
+    <div class="form-row" id="minSalaryRow" style="display:none;">
+      <label class="form-label">最低薪資（NT$）</label>
+      <input class="form-input" id="empMinSalary" placeholder="例如 18000" type="number">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('empModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Unavailable Dates Modal ── -->
+<div class="modal-overlay" id="unavailModal">
+  <div class="modal" style="width:420px;">
+    <div class="modal-title" id="unavailModalTitle">設定不可排班日</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">點擊日期切換，<span style="color:var(--accent2);font-weight:600;">橘色</span>為不可排班日</div>
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calPrev()">◀</button>
+      <span id="calMonthLabel"></span>
+      <button class="cal-nav" onclick="calNext()">▶</button>
+    </div>
+    <div class="cal-grid" id="calDayLabels"></div>
+    <div class="cal-grid" id="calGrid" style="margin-top:4px;"></div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text2);">已選：<span id="calSelected" style="color:var(--accent2);font-weight:500;">無</span></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('unavailModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveUnavail()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Assign Employee Modal ── -->
+<div class="modal-overlay" id="assignModal">
+  <div class="modal" style="width:360px;">
+    <div class="modal-title">手動新增員工</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px;" id="assignModalSubtitle"></div>
+    <div class="assign-emp-list" id="assignEmpList"></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('assignModal')">關閉</button></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════
+const STORE_COLORS = ['#2D5A3D','#1E40AF','#5B21B6','#92400E','#C4472A','#0369A1','#065F46','#7C3AED'];
+// Taiwan national holidays by month key "YYYY-MM"
+const TW_HOLIDAYS = {
+  '2026-01': ['2026-01-01'],
+  '2026-02': ['2026-02-16','2026-02-17','2026-02-18','2026-02-19','2026-02-20'],
+  '2026-03': [],
+  '2026-04': ['2026-04-03','2026-04-04','2026-04-05'],
+  '2026-05': ['2026-05-01'],
+  '2026-06': ['2026-06-19'],
+  '2026-07': ['2026-07-01'],
+  '2026-08': [],
+  '2026-09': ['2026-09-03'],
+  '2026-10': ['2026-10-09','2026-10-10'],
+  '2026-11': [],
+  '2026-12': ['2026-12-25'],
+  '2025-07': ['2025-07-01','2025-07-28'],
+};
+function getHolidays(year, month) {
+  const key = `${year}-${String(month+1).padStart(2,'0')}`;
+  return TW_HOLIDAYS[key] || [];
+}
+function isHoliday(dateStr, holidays) { return holidays.includes(dateStr); }
+const cellClass = { morning:'cell-morning', afternoon:'cell-afternoon', evening:'cell-evening', holiday:'cell-holiday' };
+const dotClass  = { morning:'dot-morning',  afternoon:'dot-afternoon',  evening:'dot-evening',  holiday:'dot-holiday' };
+const AVATAR_PALETTES = [
+  ['#E8F0EB','#2D5A3D'],['#EDE9FE','#5B21B6'],['#DBEAFE','#1E40AF'],
+  ['#FEF3C7','#92400E'],['#FCE7F3','#9D174D'],['#D1FAE5','#065F46'],
+];
+
+function makeDefaultShifts(storeId) {
+  return [
+    { id: sid(), storeId, name:'平日早班', type:'weekday', period:'morning',   start:'08:00', end:'14:00', staff:2, mult:1.0, active:true,  preset:true },
+    { id: sid(), storeId, name:'平日午班', type:'weekday', period:'afternoon', start:'14:00', end:'20:00', staff:2, mult:1.0, active:true,  preset:true },
+    { id: sid(), storeId, name:'平日晚班', type:'weekday', period:'evening',   start:'20:00', end:'02:00', staff:1, mult:1.0, active:true,  preset:true },
+    { id: sid(), storeId, name:'假日早班', type:'weekend', period:'morning',   start:'08:00', end:'14:00', staff:3, mult:1.0, active:false, preset:true },
+    { id: sid(), storeId, name:'假日午班', type:'weekend', period:'afternoon', start:'14:00', end:'20:00', staff:3, mult:1.0, active:true,  preset:true },
+    { id: sid(), storeId, name:'國定假日班',type:'holiday', period:'morning',  start:'08:00', end:'14:00', staff:2, mult:2.0, active:true,  preset:true },
+  ];
+}
+
+let _sid = 100;
+function sid() { return ++_sid; }
+
+// Stores array — each store has id, name, address, color
+let stores = [
+  { id: 1, name: '信義店', address: '台北市信義區松壽路', color: '#2D5A3D' },
+  { id: 2, name: '西門店', address: '台北市萬華區西門町', color: '#1E40AF' },
+];
+
+// All employees — each has storeId
+let employees = [
+  { id:10, storeId:1, name:'王小明', rate:175, prefs:['m','a'], minSalaryOn:true,  minSalary:18000, unavail:['2025-07-02','2025-07-09'], avatarBg:'#E8F0EB', avatarColor:'#2D5A3D' },
+  { id:11, storeId:1, name:'李美華', rate:180, prefs:['a','e'], minSalaryOn:false, minSalary:0,     unavail:['2025-07-07'],              avatarBg:'#EDE9FE', avatarColor:'#5B21B6' },
+  { id:12, storeId:1, name:'陳大偉', rate:160, prefs:['m'],     minSalaryOn:true,  minSalary:15000, unavail:[],                          avatarBg:'#DBEAFE', avatarColor:'#1E40AF' },
+  { id:20, storeId:2, name:'林雅婷', rate:170, prefs:['e'],     minSalaryOn:false, minSalary:0,     unavail:['2025-07-05','2025-07-06'], avatarBg:'#FEF3C7', avatarColor:'#92400E' },
+  { id:21, storeId:2, name:'張建國', rate:165, prefs:['m','a'], minSalaryOn:true,  minSalary:16000, unavail:[],                          avatarBg:'#D1FAE5', avatarColor:'#065F46' },
+];
+
+// All shifts — each has storeId
+let shifts = [
+  ...makeDefaultShifts(1),
+  ...makeDefaultShifts(2),
+];
+
+// Schedules: storeId -> { dateStr -> [{shiftId, empId, locked}] }
+let schedules = { 1: {}, 2: {} };
+
+// Current active store
+let currentStoreId = 1;
+
+// ── Helpers ──
+function currentStore()    { return stores.find(s => s.id === currentStoreId); }
+function storeEmps()       { return employees.filter(e => e.storeId === currentStoreId); }
+function storeShifts()     { return shifts.filter(s => s.storeId === currentStoreId); }
+function storeSchedule()   { return schedules[currentStoreId] || {}; }
+
+function shiftHours(s) {
+  const [sh,sm] = s.start.split(':').map(Number);
+  let [eh,em] = s.end.split(':').map(Number);
+  if(eh < sh) eh += 24;
+  return (eh + em/60) - (sh + sm/60);
+}
+
+function storeBadgeHTML(storeId) {
+  const st = stores.find(s => s.id === storeId) || currentStore();
+  return `<span style="background:${st.color}22;color:${st.color};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;">${st.name}</span>`;
+}
+
+// ════════════════════════════════════════
+//  SCREEN NAV
+// ════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  const navEl = document.getElementById('nav-' + name);
+  if(navEl) navEl.classList.add('active');
+  if(name === 'stores')    renderStores();
+  if(name === 'employees') { updateBadges(); renderEmployees(); }
+  if(name === 'shifts')    { updateBadges(); renderShifts(); }
+  if(name === 'config')    { updateBadges(); renderConfigShiftList(); renderUnavailList(); }
+  if(name === 'schedule')  { updateBadges(); updatePeriodLabels(); renderSchedule(); }
+  if(name === 'summary')   { updateBadges(); updatePeriodLabels(); renderSummary(); }
+}
+
+function updatePeriodLabels() {
+  const {year, month} = getSchedulePeriod();
+  const label = `${year}年${month+1}月`;
+  ['scheduleperiodLabel','summaryPeriodLabel'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = label;
+  });
+}
+
+function updateBadges() {
+  const b = storeBadgeHTML();
+  ['emp','shift','config','schedule','summary'].forEach(k => {
+    const el = document.getElementById(k + 'StoreBadge');
+    if(el) el.outerHTML = `<span class="topbar-store-badge" id="${k}StoreBadge">${b}</span>`;
+  });
+}
+
+// ════════════════════════════════════════
+//  STORE SWITCHER
+// ════════════════════════════════════════
+function renderStoreSwitcher() {
+  const st = currentStore();
+  document.getElementById('currentStoreDot').style.background = st.color;
+  document.getElementById('currentStoreName').textContent = st.name;
+  const list = document.getElementById('storeOptionList');
+  list.innerHTML = stores.map(s => `
+    <div class="store-option${s.id === currentStoreId ? ' active' : ''}" onclick="switchStore(${s.id})">
+      <div class="store-dot" style="background:${s.color};"></div>
+      <span>${s.name}</span>
+      ${s.id === currentStoreId ? '<span style="font-size:10px;color:#6EE7A0;">✓</span>' : ''}
+    </div>`).join('');
+}
+
+function toggleStoreDropdown() {
+  document.getElementById('storeDropdown').classList.toggle('open');
+}
+
+function switchStore(id) {
+  currentStoreId = id;
+  if(!schedules[id]) schedules[id] = {};
+  renderStoreSwitcher();
+  document.getElementById('storeDropdown').classList.remove('open');
+  // Re-render current active screen
+  const active = document.querySelector('.screen.active');
+  if(active) {
+    const name = active.id.replace('screen-','');
+    showScreen(name);
+  }
+}
+
+// ════════════════════════════════════════
+//  STORES SCREEN
+// ════════════════════════════════════════
+function renderStores() {
+  const grid = document.getElementById('storeGrid');
+  grid.innerHTML = stores.map(st => {
+    const emps = employees.filter(e => e.storeId === st.id).length;
+    const sh = shifts.filter(s => s.storeId === st.id && s.active).length;
+    return `
+    <div class="store-card">
+      <div class="store-card-header">
+        <div class="store-color-dot" style="background:${st.color};"></div>
+        <div class="store-card-name">${st.name}</div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">${st.address || '未設定地址'}</div>
+      <div class="store-card-stats">
+        <div class="store-stat"><div class="store-stat-label">員工人數</div><div class="store-stat-value">${emps} 人</div></div>
+        <div class="store-stat"><div class="store-stat-label">啟用班別</div><div class="store-stat-value">${sh} 種</div></div>
+      </div>
+      <div class="store-card-footer">
+        <button class="btn btn-ghost btn-sm" onclick="switchStore(${st.id});showScreen('employees')">進入管理</button>
+        <button class="btn btn-ghost btn-sm" onclick="openEditStoreModal(${st.id})">編輯</button>
+        ${stores.length > 1 ? `<button class="btn btn-danger-ghost btn-sm" onclick="deleteStore(${st.id})">刪除</button>` : ''}
+      </div>
+    </div>`;
+  }).join('') + `
+    <div class="store-card" style="border:1.5px dashed var(--border);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:140px;" onclick="openAddStoreModal()">
+      <div style="text-align:center;color:var(--text2);"><div style="font-size:24px;margin-bottom:6px;">＋</div><div style="font-size:12px;">新增分店</div></div>
+    </div>`;
+}
+
+let editingStoreId = null;
+let selectedColor = STORE_COLORS[0];
+
+function openAddStoreModal() {
+  editingStoreId = null;
+  selectedColor = STORE_COLORS.find(c => !stores.find(s => s.color === c)) || STORE_COLORS[0];
+  document.getElementById('storeModalTitle').textContent = '新增分店';
+  document.getElementById('storeName').value = '';
+  document.getElementById('storeAddress').value = '';
+  renderColorPicker();
+  document.getElementById('storeDropdown').classList.remove('open');
+  document.getElementById('storeModal').classList.add('open');
+}
+
+function openEditStoreModal(id) {
+  editingStoreId = id;
+  const st = stores.find(s => s.id === id);
+  selectedColor = st.color;
+  document.getElementById('storeModalTitle').textContent = '編輯分店';
+  document.getElementById('storeName').value = st.name;
+  document.getElementById('storeAddress').value = st.address || '';
+  renderColorPicker();
+  document.getElementById('storeModal').classList.add('open');
+}
+
+function renderColorPicker() {
+  document.getElementById('colorPicker').innerHTML = STORE_COLORS.map(c =>
+    `<div class="color-swatch${c === selectedColor ? ' selected' : ''}" style="background:${c};" onclick="selectColor('${c}')"></div>`
+  ).join('');
+}
+
+function selectColor(c) { selectedColor = c; renderColorPicker(); }
+
+function saveStore() {
+  const name = document.getElementById('storeName').value.trim();
+  if(!name) { alert('請輸入店名'); return; }
+  if(editingStoreId) {
+    const st = stores.find(s => s.id === editingStoreId);
+    st.name = name; st.address = document.getElementById('storeAddress').value.trim(); st.color = selectedColor;
+  } else {
+    const newId = sid();
+    stores.push({ id: newId, name, address: document.getElementById('storeAddress').value.trim(), color: selectedColor });
+    shifts.push(...makeDefaultShifts(newId));
+    schedules[newId] = {};
+  }
+  closeModal('storeModal');
+  renderStoreSwitcher();
+  renderStores();
+}
+
+function deleteStore(id) {
+  if(!confirm('確定要刪除此分店？相關員工和班表資料也會一併刪除。')) return;
+  stores = stores.filter(s => s.id !== id);
+  employees = employees.filter(e => e.storeId !== id);
+  shifts = shifts.filter(s => s.storeId !== id);
+  delete schedules[id];
+  if(currentStoreId === id) { currentStoreId = stores[0]?.id || null; }
+  renderStoreSwitcher();
+  renderStores();
+}
+
+// ════════════════════════════════════════
+//  EMPLOYEES
+// ════════════════════════════════════════
+function renderEmployees() {
+  const grid = document.getElementById('empGrid');
+  const emps = storeEmps();
+  const prefLabel = { m:'早班', a:'午班', e:'晚班' };
+  const prefTag   = { m:'tag-morning', a:'tag-afternoon', e:'tag-evening' };
+  grid.innerHTML = emps.map(e => `
+    <div class="emp-card">
+      <div class="emp-avatar" style="background:${e.avatarBg};color:${e.avatarColor};">${e.name[0]}</div>
+      <div class="emp-name">${e.name}</div>
+      <div class="emp-rate">NT$ ${e.rate} / hr</div>
+      <div class="tag-row">
+        ${e.prefs.map(p => `<span class="tag ${prefTag[p]}">${prefLabel[p]}</span>`).join('')}
+        ${e.minSalaryOn ? `<span class="tag tag-minsalary">最低薪資 ✓</span>` : ''}
+      </div>
+      <div style="font-size:11px;color:var(--text2);">${e.unavail.length ? '不可排班：' + e.unavail.map(d=>d.slice(5).replace('-','/')).join(', ') : '無限制'}</div>
+      <div class="emp-card-footer"><button class="btn btn-ghost btn-sm" onclick="openEditEmpModal(${e.id})">編輯</button></div>
+    </div>`).join('') + `
+    <div class="emp-card" style="border:1.5px dashed var(--border);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:140px;" onclick="openAddEmpModal()">
+      <div style="text-align:center;color:var(--text2);"><div style="font-size:24px;margin-bottom:6px;">＋</div><div style="font-size:12px;">新增員工</div></div>
+    </div>`;
+}
+
+let editingEmpId = null;
+function openAddEmpModal() {
+  editingEmpId = null;
+  document.getElementById('empModalTitle').textContent = '新增員工';
+  document.getElementById('empName').value = '';
+  document.getElementById('empRate').value = '';
+  document.getElementById('empMinSalary').value = '';
+  ['m','a','e'].forEach(p => document.getElementById('pref-'+p).className = 'pref-btn');
+  document.getElementById('minSalaryToggle').className = 'toggle off';
+  document.getElementById('minSalaryRow').style.display = 'none';
+  document.getElementById('empModal').classList.add('open');
+}
+function openEditEmpModal(id) {
+  editingEmpId = id;
+  const e = employees.find(x => x.id === id);
+  document.getElementById('empModalTitle').textContent = '編輯員工 — ' + e.name;
+  document.getElementById('empName').value = e.name;
+  document.getElementById('empRate').value = e.rate;
+  document.getElementById('empMinSalary').value = e.minSalary || '';
+  ['m','a','e'].forEach(p => {
+    const btn = document.getElementById('pref-'+p);
+    const sel = {m:'sel-m',a:'sel-a',e:'sel-e'};
+    btn.className = 'pref-btn' + (e.prefs.includes(p) ? ' '+sel[p] : '');
+  });
+  document.getElementById('minSalaryToggle').className = 'toggle ' + (e.minSalaryOn ? 'on' : 'off');
+  document.getElementById('minSalaryRow').style.display = e.minSalaryOn ? 'block' : 'none';
+  document.getElementById('empModal').classList.add('open');
+}
+function saveEmployee() {
+  const name = document.getElementById('empName').value.trim();
+  const rate = parseInt(document.getElementById('empRate').value) || 0;
+  const prefs = ['m','a','e'].filter(p => document.getElementById('pref-'+p).className.includes('sel-'));
+  const minOn = document.getElementById('minSalaryToggle').classList.contains('on');
+  const minSal = parseInt(document.getElementById('empMinSalary').value) || 0;
+  if(!name || !rate) { alert('請填寫姓名與時薪'); return; }
+  if(editingEmpId) {
+    const e = employees.find(x => x.id === editingEmpId);
+    Object.assign(e, { name, rate, prefs, minSalaryOn:minOn, minSalary:minSal });
+  } else {
+    const pal = AVATAR_PALETTES[employees.filter(e=>e.storeId===currentStoreId).length % AVATAR_PALETTES.length];
+    employees.push({ id:sid(), storeId:currentStoreId, name, rate, prefs, minSalaryOn:minOn, minSalary:minSal, unavail:[], avatarBg:pal[0], avatarColor:pal[1] });
+  }
+  closeModal('empModal');
+  renderEmployees();
+}
+function togglePref(p) {
+  const btn = document.getElementById('pref-'+p);
+  const sel = {m:'sel-m',a:'sel-a',e:'sel-e'};
+  btn.classList.toggle(sel[p]);
+}
+function toggleMinSalary() {
+  const t = document.getElementById('minSalaryToggle');
+  t.classList.toggle('on'); t.classList.toggle('off');
+  document.getElementById('minSalaryRow').style.display = t.classList.contains('on') ? 'block' : 'none';
+}
+
+// ════════════════════════════════════════
+//  SHIFTS
+// ════════════════════════════════════════
+function renderShifts() {
+  const preset = storeShifts().filter(s => s.preset);
+  const custom = storeShifts().filter(s => !s.preset);
+  document.getElementById('shiftTableBody').innerHTML = preset.map(s => shiftRow(s, false)).join('');
+  document.getElementById('customShiftBody').innerHTML = custom.length
+    ? custom.map(s => shiftRow(s, true)).join('')
+    : '<tr><td colspan="8" style="color:var(--text2);font-size:12px;padding:12px 10px;">尚未新增自訂班別</td></tr>';
+}
+function shiftRow(s, showDelete) {
+  return `<tr>
+    <td><span class="shift-dot ${dotClass[s.period]||'dot-morning'}"></span>
+      <input class="inline-input inline-input-name" value="${s.name}" onchange="updateShift(${s.id},'name',this.value)"></td>
+    <td><input class="inline-input" value="${s.start}" onchange="updateShift(${s.id},'start',this.value)"></td>
+    <td><input class="inline-input" value="${s.end}"   onchange="updateShift(${s.id},'end',this.value)"></td>
+    <td style="font-family:var(--mono);font-size:12px;">${shiftHours(s).toFixed(0)}h</td>
+    <td><input class="inline-input inline-input-sm" type="number" value="${s.staff}" min="1" onchange="updateShift(${s.id},'staff',+this.value)"> 人</td>
+    <td><select class="inline-input" style="width:70px;" onchange="updateShift(${s.id},'mult',+this.value)">
+      <option value="1" ${s.mult===1?'selected':''}>×1.0</option>
+      <option value="2" ${s.mult===2?'selected':''}>×2.0</option>
+    </select></td>
+    <td><div class="toggle ${s.active?'on':'off'}" onclick="toggleShift(${s.id})"></div></td>
+    ${showDelete ? `<td><button class="btn btn-ghost btn-sm" onclick="removeCustomShift(${s.id})">刪除</button></td>` : ''}
+  </tr>`;
+}
+function updateShift(id, key, val) { const s=shifts.find(x=>x.id===id); if(s){s[key]=val; renderShifts();} }
+function toggleShift(id)           { const s=shifts.find(x=>x.id===id); if(s){s.active=!s.active; renderShifts();} }
+function addCustomShift()          { shifts.push({id:sid(),storeId:currentStoreId,name:'自訂班別',type:'weekday',period:'morning',start:'09:00',end:'17:00',staff:1,mult:1.0,active:true,preset:false}); renderShifts(); }
+function removeCustomShift(id)     { shifts=shifts.filter(s=>s.id!==id); renderShifts(); }
+
+// ════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════
+function renderConfigShiftList() {
+  document.getElementById('configShiftList').innerHTML = storeShifts().map(s => `
+    <div class="shift-check-row">
+      <div class="checkbox ${s.active?'checked':''}" onclick="toggleCheck(this,${s.id})">${s.active?'✓':''}</div>
+      <span class="shift-dot ${dotClass[s.period]||'dot-morning'}"></span>${s.name}（${s.start}–${s.end}）
+    </div>`).join('');
+}
+function toggleCheck(el, shiftId) {
+  el.classList.toggle('checked');
+  el.textContent = el.classList.contains('checked') ? '✓' : '';
+  const s = shifts.find(x => x.id === shiftId);
+  if(s) s.active = el.classList.contains('checked');
+}
+
+// ════════════════════════════════════════
+//  UNAVAILABLE DATES
+// ════════════════════════════════════════
+function renderUnavailList() {
+  document.getElementById('unavailList').innerHTML = storeEmps().map(e => `
+    <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;">
+      <span style="font-weight:500;">${e.name}</span>
+      <span style="color:var(--text2);font-size:11px;flex:1;margin:0 8px;">${e.unavail.length ? e.unavail.map(d=>d.slice(5).replace('-','/')).join(', ') : '未設定'}</span>
+      <button class="btn btn-ghost btn-sm" onclick="openUnavailModal(${e.id})">設定</button>
+    </div>`).join('');
+}
+
+let editingUnavailEmpId=null, calYear=2025, calMonth=6, tempUnavail=new Set();
+function openUnavailModal(empId) {
+  editingUnavailEmpId=empId;
+  const e=employees.find(x=>x.id===empId);
+  tempUnavail=new Set(e.unavail); const _p=getSchedulePeriod(); calYear=_p.year; calMonth=_p.month;
+  document.getElementById('unavailModalTitle').textContent=`${e.name} — 不可排班日`;
+  renderCal(); document.getElementById('unavailModal').classList.add('open');
+}
+function renderCal() {
+  const months=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  document.getElementById('calMonthLabel').textContent=`${calYear}年 ${months[calMonth]}`;
+  document.getElementById('calDayLabels').innerHTML=['日','一','二','三','四','五','六'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+  const first=new Date(calYear,calMonth,1).getDay(), days=new Date(calYear,calMonth+1,0).getDate();
+  let html='';
+  for(let i=0;i<first;i++) html+='<div class="cal-day empty"></div>';
+  for(let d=1;d<=days;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    html+=`<div class="cal-day${tempUnavail.has(ds)?' blocked':''}" onclick="toggleDay('${ds}')">${d}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML=html;
+  document.getElementById('calSelected').textContent=[...tempUnavail].sort().map(d=>d.slice(5).replace('-','/')).join(', ')||'無';
+}
+function toggleDay(d){if(tempUnavail.has(d))tempUnavail.delete(d);else tempUnavail.add(d);renderCal();}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();}
+function saveUnavail(){
+  const e=employees.find(x=>x.id===editingUnavailEmpId);
+  if(e)e.unavail=[...tempUnavail].sort();
+  closeModal('unavailModal'); renderUnavailList();
+}
+
+// ════════════════════════════════════════
+//  AUTO SCHEDULE
+// ════════════════════════════════════════
+function runAutoSchedule() {
+  const btn = document.getElementById('rerunBtn');
+  if(btn){btn.innerHTML='<span class="spinning">⏳</span> 排班中...';btn.disabled=true;}
+  setTimeout(()=>{
+    generateSchedule();
+    if(btn){btn.innerHTML='🔄 重新自動排班';btn.disabled=false;}
+    showScreen('schedule');
+  }, 900);
+}
+function getSchedulePeriod() {
+  const startEl = document.getElementById('configStartDate');
+  const val = startEl ? startEl.value.trim() : '';
+  // Accept YYYY/MM/DD or YYYY-MM-DD
+  const parts = val.replace(/-/g,'/').split('/');
+  if(parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return { year: parseInt(parts[0]), month: parseInt(parts[1]) - 1 };
+  }
+  // fallback to current month
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() };
+}
+
+function generateSchedule() {
+  schedules[currentStoreId] = {};
+  const sch = schedules[currentStoreId];
+  const {year, month} = getSchedulePeriod();
+  const days = new Date(year, month+1, 0).getDate();
+  const activeShifts = storeShifts().filter(s=>s.active);
+  const emps = storeEmps();
+  const consecutive={}; emps.forEach(e=>consecutive[e.id]=0);
+  for(let d=1;d<=days;d++){
+    const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow=new Date(year,month,d).getDay();
+    const hols=getHolidays(year,month);
+    const isHol=isHoliday(ds,hols), isWknd=dow===0||dow===6;
+    sch[ds]=[];
+    const dayShifts=activeShifts.filter(s=>isHol?s.type==='holiday':isWknd?s.type==='weekend':s.type==='weekday');
+    dayShifts.forEach(shift=>{
+      const avail=emps.filter(e=>!e.unavail.includes(ds)&&consecutive[e.id]<6);
+      const pref=avail.filter(e=>e.prefs.includes(shift.period));
+      const pool=pref.length?pref:avail;
+      [...pool].sort(()=>Math.random()-.5).slice(0,shift.staff).forEach(e=>{
+        sch[ds].push({shiftId:shift.id,empId:e.id,locked:false});
+        consecutive[e.id]++;
+      });
+    });
+    emps.forEach(e=>{if(!sch[ds].some(a=>a.empId===e.id))consecutive[e.id]=0;});
+  }
+}
+
+// ════════════════════════════════════════
+//  SCHEDULE TABLE  (Y=班別, X=日期)
+// ════════════════════════════════════════
+function renderSchedule() {
+  const {year, month} = getSchedulePeriod();
+  const days = new Date(year, month+1, 0).getDate();
+  const showDays=days; // show full month
+  const table=document.getElementById('scheduleTable');
+  const sch=storeSchedule();
+  const activeShifts=storeShifts().filter(s=>s.active);
+  const rowBg={morning:'#FFFBEB',afternoon:'#EFF6FF',evening:'#F5F3FF',holiday:'#FEF2F2'};
+
+  // Header
+  let hdr='<thead><tr><th style="min-width:100px;text-align:left;padding-left:10px;background:var(--surface2);">班別</th>';
+  for(let d=1;d<=showDays;d++){
+    const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow=new Date(year,month,d).getDay();
+    const dl=['日','一','二','三','四','五','六'][dow];
+    const _hols=getHolidays(year,month);
+    const isHol=isHoliday(ds,_hols),isWknd=dow===0||dow===6,red=isHol||isWknd;
+    hdr+=`<th style="min-width:68px;${isHol?'background:#FEF2F2;':''}">
+      <div style="font-size:10px;color:${red?'var(--accent2)':'var(--text2)'};">週${dl}</div>
+      <div class="date-num${red?' date-red':''}">${month+1}/${d}</div>
+      ${isHol?'<div style="color:var(--accent2);font-size:9px;font-weight:600;">國定</div>':''}
+    </th>`;
+  }
+  
+
+  // Body
+  let body='<tbody>';
+  activeShifts.forEach(shift=>{
+    const rb=rowBg[shift.period]||'#fff';
+    body+=`<tr><td style="background:var(--surface2);font-weight:600;padding:7px 10px;white-space:nowrap;border:1px solid var(--border);">
+      <span class="shift-dot ${dotClass[shift.period]||'dot-morning'}"></span>${shift.name}
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text2);font-weight:400;">${shift.start}–${shift.end}</div>
+    </td>`;
+    for(let d=1;d<=showDays;d++){
+      const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dow=new Date(year,month,d).getDay();
+      const isHol=isHoliday(ds,getHolidays(year,month)),isWknd=dow===0||dow===6;
+      const applies=isHol?shift.type==='holiday':isWknd?shift.type==='weekend':shift.type==='weekday';
+      if(!applies){body+=`<td style="background:#F7F7F5;text-align:center;border:1px solid var(--border);"><span style="color:#D0CBC4;font-size:10px;">—</span></td>`;continue;}
+      const assigned=(sch[ds]||[]).filter(a=>a.shiftId===shift.id);
+      const needed=shift.staff, lacking=assigned.length<needed;
+      const cellBg=isHol?'#FEF2F2':rb;
+      const cc=isHol?'cell-holiday':cellClass[shift.period]||'cell-morning';
+      if(assigned.length===0){
+        body+=`<td style="background:${lacking?'#FFF3F3':cellBg};text-align:center;vertical-align:middle;cursor:pointer;border:1px solid var(--border);" onclick="openAssignModal('${ds}',${shift.id})">
+          <span style="color:${lacking?'var(--accent2)':'#C8C3BB'};font-size:11px;">${lacking?'⚠️ 缺':'＋'}</span></td>`;
+      } else {
+        const chips=assigned.map(a=>{
+          const emp=storeEmps().find(e=>e.id===a.empId); if(!emp) return '';
+          return `<div style="display:flex;align-items:center;justify-content:center;gap:2px;margin:2px 1px;">
+            <span class="emp-name-chip ${cc}${a.locked?' cell-locked':''}" onclick="toggleLock('${ds}',${a.empId},${a.shiftId})">${emp.name}${a.locked?' 🔒':''}</span>
+            <span class="remove-btn" onclick="removeAssign('${ds}',${a.empId},${a.shiftId})">✕</span>
+          </div>`;
+        }).join('');
+        const warn=lacking?`<div style="font-size:9px;color:var(--accent2);margin-top:1px;">需再補${needed-assigned.length}人</div>`:'';
+        const add=`<div class="add-emp-btn" onclick="openAssignModal('${ds}',${shift.id})">＋ 加人</div>`;
+        body+=`<td style="background:${cellBg};text-align:center;vertical-align:middle;padding:3px;border:1px solid var(--border);">${chips}${warn}${add}</td>`;
+      }
+    }
+    body+='</tr>';
+  });
+  body+='</tbody>';
+  table.innerHTML=hdr+body;
+}
+
+function toggleLock(ds,empId,shiftId){
+  const sch=storeSchedule();
+  const a=(sch[ds]||[]).find(x=>x.empId===empId&&x.shiftId===shiftId);
+  if(a){a.locked=!a.locked;renderSchedule();}
+}
+
+// ════════════════════════════════════════
+//  MANUAL ASSIGN / REMOVE
+// ════════════════════════════════════════
+let assignContext={dateStr:null,shiftId:null};
+function openAssignModal(ds,shiftId){
+  assignContext={dateStr:ds,shiftId};
+  const shift=shifts.find(s=>s.id===shiftId);
+  const dow=new Date(ds).getDay();
+  document.getElementById('assignModalSubtitle').textContent=
+    `${ds.slice(5).replace('-','/')}（週${'日一二三四五六'[dow]}）· ${shift?shift.name:''}`;
+  const sch=storeSchedule();
+  const already=(sch[ds]||[]).filter(a=>a.shiftId===shiftId).map(a=>a.empId);
+  document.getElementById('assignEmpList').innerHTML=storeEmps().map(emp=>{
+    const isAlready=already.includes(emp.id);
+    const isUnavail=emp.unavail.includes(ds);
+    let cls='',lbl='',click=true;
+    if(isAlready){cls='already';lbl='<span style="font-size:10px;">已排班</span>';click=false;}
+    else if(isUnavail){cls='unavail';lbl='<span style="font-size:10px;">不可排班日</span>';click=false;}
+    else{lbl='<span style="font-size:10px;color:var(--accent);">點擊指派</span>';}
+    return `<div class="assign-emp-row ${cls}" ${click?`onclick="assignEmp('${ds}',${shiftId},${emp.id})"`:''}>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:${emp.avatarBg};color:${emp.avatarColor};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;">${emp.name[0]}</div>
+        <div><div style="font-weight:600;font-size:13px;">${emp.name}</div>
+        <div style="font-size:11px;color:var(--text2);font-family:var(--mono);">NT$${emp.rate}/hr · 偏好${{m:'早',a:'午',e:'晚'}[emp.prefs[0]]||'—'}</div></div>
+      </div>${lbl}</div>`;
+  }).join('');
+  document.getElementById('assignModal').classList.add('open');
+}
+function assignEmp(ds,shiftId,empId){
+  const sch=storeSchedule();
+  if(!sch[ds])sch[ds]=[];
+  if(!sch[ds].find(a=>a.shiftId===shiftId&&a.empId===empId))
+    sch[ds].push({shiftId,empId,locked:false});
+  closeModal('assignModal'); renderSchedule();
+}
+function removeAssign(ds,empId,shiftId){
+  const sch=storeSchedule();
+  if(!sch[ds])return;
+  sch[ds]=sch[ds].filter(a=>!(a.empId===empId&&a.shiftId===shiftId));
+  renderSchedule();
+}
+
+// ════════════════════════════════════════
+//  SUMMARY
+// ════════════════════════════════════════
+function renderSummary(){
+  const sch=storeSchedule(), emps=storeEmps();
+  let totalS=0,totalH=0,totalW=0,warnN=0;
+  const rows=emps.map(emp=>{
+    let nH=0,hH=0,sc=0;
+    Object.entries(sch).forEach(([ds,asgns])=>{
+      asgns.filter(a=>a.empId===emp.id).forEach(a=>{
+        const s=shifts.find(x=>x.id===a.shiftId);if(!s)return;
+        const h=shiftHours(s);
+        const {year:sy,month:sm}=getSchedulePeriod();
+        if(isHoliday(ds,getHolidays(sy,sm))||s.mult>1)hH+=h;else nH+=h;
+        sc++;
+      });
+    });
+    const sal=Math.round(nH*emp.rate+hH*emp.rate*2);
+    const ok=!emp.minSalaryOn||sal>=emp.minSalary;
+    if(!ok)warnN++;
+    totalS+=sc;totalH+=nH+hH;totalW+=sal;
+    return{emp,sc,nH,hH,sal,ok};
+  });
+  document.getElementById('summaryCards').innerHTML=[
+    ['總班數',totalS,''],['總工時',totalH.toFixed(0)+'h',''],
+    ['薪資總計','NT$'+totalW.toLocaleString(),''],
+    ['未達最低薪資',warnN+' 人',warnN>0?'color:var(--warn)':''],
+  ].map(([l,v,s])=>`<div class="card" style="margin-bottom:0;text-align:center;"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">${l}</div><div style="font-size:22px;font-family:var(--mono);font-weight:700;${s}">${v}</div></div>`).join('');
+  document.getElementById('summaryWarn').innerHTML=rows.filter(r=>!r.ok).map(r=>
+    `<div class="warn-banner">⚠️ <span><strong>${r.emp.name}</strong> 預估 NT$${r.sal.toLocaleString()}，低於門檻 NT$${r.emp.minSalary.toLocaleString()}</span></div>`).join('');
+  document.getElementById('summaryBody').innerHTML=rows.map(r=>`
+    <tr><td><strong>${r.emp.name}</strong></td><td>${r.sc}</td><td>${r.nH.toFixed(0)}h</td><td>${r.hH.toFixed(0)}h</td>
+    <td>${(r.nH+r.hH).toFixed(0)}h</td><td class="salary-num">NT$${r.sal.toLocaleString()}</td>
+    <td class="salary-num" style="color:${r.emp.minSalaryOn?'var(--accent2)':'var(--text2)'};">${r.emp.minSalaryOn?'NT$'+r.emp.minSalary.toLocaleString():'—'}</td>
+    <td><span class="status-badge ${r.ok?'status-ok':'status-warn'}">${r.ok?'達標 ✓':'未達標 ⚠️'}</span></td></tr>`).join('');
+}
+
+// ════════════════════════════════════════
+//  UTILITIES
+// ════════════════════════════════════════
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function toggleWeekday(el){el.classList.toggle('open');el.classList.toggle('closed');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.store-switcher'))
+    document.getElementById('storeDropdown').classList.remove('open');
+});
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+generateSchedule();
+renderStoreSwitcher();
+showScreen('employees');
+</script>
+</body>
+</html>
